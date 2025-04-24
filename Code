@@ -1,0 +1,95 @@
+!pip uninstall numpy -y
+!pip install numpy==1.23.5
+!pip install scikit-surprise --upgrade
+import pandas as pd
+from surprise import Dataset, Reader, KNNBasic
+from surprise.model_selection import train_test_split
+from surprise import accuracy
+
+# Read the dataset
+def load_data(file_path):
+    data = pd.read_csv(file_path)
+    return data
+
+# Prepare the dataset for surprise
+def prepare_data(data):
+    # Convert the dataset into a format suitable for Surprise (user_id, item_id, rating)
+    workout_data = []
+    for i, row in data.iterrows():
+        exercises = row['exercises_done'].split(", ")
+        for exercise in exercises:
+            workout_data.append((row['user_id'], exercise, row['rating']))
+
+    # Convert list of tuples to a pandas DataFrame
+    workout_df = pd.DataFrame(workout_data, columns=['user_id', 'exercise', 'rating'])
+    return workout_df
+
+# Create a recommendation system
+def create_recommendation_system(workout_df):
+    reader = Reader(rating_scale=(1, 5))  # rating scale from 1 to 5
+    dataset = Dataset.load_from_df(workout_df[['user_id', 'exercise', 'rating']], reader)
+
+    trainset, testset = train_test_split(dataset, test_size=0.2)
+
+    # Use KNNBasic algorithm for recommendations
+    model = KNNBasic()
+    model.fit(trainset)
+
+    return model, testset, workout_df
+
+# Make a prediction for the next exercise
+def recommend_next_exercise(user_id, model, workout_df):
+    # Get all unique exercises
+    unique_exercises = workout_df['exercise'].unique()
+    predicted_ratings = []
+
+    # Predict ratings for each exercise
+    for exercise in unique_exercises:
+        pred = model.predict(user_id, exercise)
+        predicted_ratings.append((exercise, pred.est))
+
+    # Sort by the predicted rating and return the top recommended exercises
+    predicted_ratings.sort(key=lambda x: x[1], reverse=True)
+    return predicted_ratings  # Return all recommended exercises sorted by rating
+
+# Get the user's history of exercises and their name
+def get_user_details(user_id, data, workout_df):
+    user_data = data[data['user_id'] == user_id]
+    user_name = user_data['name'].values[0] if not user_data.empty else "Unknown"
+    user_history = workout_df[workout_df['user_id'] == user_id]
+    exercises_done = user_history['exercise'].unique()
+    return user_name, exercises_done
+
+# Main function
+def main():
+    # Ask the user to input the dataset path
+    dataset_path = input("Enter the path to the workout dataset CSV: ")
+
+    # Load the dataset
+    data = load_data(dataset_path)
+
+    # Prepare the data for the recommendation system
+    workout_df = prepare_data(data)
+
+    # Create the recommendation model
+    model, testset, workout_df = create_recommendation_system(workout_df)
+
+    # Example: Recommend exercises for a specific user
+    user_id = int(input("Enter user_id to get exercise recommendations: "))
+
+    # Get the user's details and history
+    user_name, user_history = get_user_details(user_id, data, workout_df)
+
+    # Display user's name and exercise history
+    print(f"\nUser: {user_name}")
+    print(f"User {user_id}'s exercise history: {', '.join(user_history)}")
+
+    # Get the next recommended exercises
+    recommendations = recommend_next_exercise(user_id, model, workout_df)
+
+    print(f"\nNext recommended exercises for {user_name} ({user_id}):")
+    for exercise, rating in recommendations:
+        print(f"Exercise: {exercise}, Predicted Rating: {rating:.2f}")
+
+if __name__ == "__main__":
+    main()
