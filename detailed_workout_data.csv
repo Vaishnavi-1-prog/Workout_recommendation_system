@@ -1,0 +1,11 @@
+name,user_id,exercises_done,body_weight,physical_injuries,rating
+Alice,1,"Push-ups, Squats, Running",60,None,4
+Bob,2,"Pull-ups, Squats",75,Knee pain,5
+Charlie,3,"Running, Push-ups",80,None,3
+David,4,"Cycling, Squats",70,Back pain,4
+Eve,5,"Push-ups, Running",65,Ankle sprain,2
+Frank,6,"Squats, Pull-ups",85,Shoulder injury,5
+Grace,7,"Running, Cycling",72,None,3
+Hannah,8,"Cycling, Push-ups",68,None,4
+Ivy,9,"Push-ups, Squats",78,Knee pain,5
+Jack,10,"Running, Pull-ups",74,None,3
